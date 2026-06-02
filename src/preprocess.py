@@ -22,8 +22,8 @@ col_names = [
 ]
 
 df = pd.read_csv("data/KDDTrain+.txt", names=col_names)
-
 df.drop("difficulty", axis='columns', inplace=True)
+
 
 label_encoder = LabelEncoder()
 df["protocol_type"] = label_encoder.fit_transform(df["protocol_type"])
@@ -75,3 +75,9 @@ mapping = {
 }
 df["label"] = df["label"].map(mapping)
 print(df["label"].value_counts())
+
+y = df["label"]
+X = df.drop( "label", axis="columns")
+
+print(X.shape)
+print(y.shape)
