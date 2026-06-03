@@ -1,5 +1,6 @@
+from matplotlib.transforms import Transform
 import pandas as pd
-from sklearn.preprocessing import LabelEncoder
+from sklearn.preprocessing import LabelEncoder, MinMaxScaler
 
 
 
@@ -76,8 +77,21 @@ mapping = {
 df["label"] = df["label"].map(mapping)
 print(df["label"].value_counts())
 
+# Separate features and labels
+
 y = df["label"]
 X = df.drop( "label", axis="columns")
 
 print(X.shape)
 print(y.shape)
+
+# Normalize the features using Min-Max scaling
+scaler = MinMaxScaler()
+X_scaled = scaler.fit_transform(X)
+X_scaled = pd.DataFrame(X_scaled, columns=X.columns)
+print(X_scaled)
+
+# Encode the labels
+label_encoder = LabelEncoder()
+y_encoded = label_encoder.fit_transform(y)
+print(y_encoded)
