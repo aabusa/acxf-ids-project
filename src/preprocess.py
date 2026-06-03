@@ -3,6 +3,7 @@ import pandas as pd
 from sklearn.preprocessing import LabelEncoder, MinMaxScaler
 
 
+#prepare the data for training
 
 col_names = [
     "duration", "protocol_type", "service", "flag",
@@ -26,10 +27,12 @@ df = pd.read_csv("data/KDDTrain+.txt", names=col_names)
 df.drop("difficulty", axis='columns', inplace=True)
 
 
-label_encoder = LabelEncoder()
-df["protocol_type"] = label_encoder.fit_transform(df["protocol_type"])
-df["service"] = label_encoder.fit_transform(df["service"])
-df["flag"] = label_encoder.fit_transform(df["flag"])
+label_encoder_1 = LabelEncoder()
+df["protocol_type"] = label_encoder_1.fit_transform(df["protocol_type"])
+label_encoder_2 = LabelEncoder()
+df["service"] = label_encoder_2.fit_transform(df["service"])
+label_encoder_3 = LabelEncoder()
+df["flag"] = label_encoder_3.fit_transform(df["flag"])
 
 mapping = {
     "normal": "normal",
@@ -95,3 +98,33 @@ print(X_scaled)
 label_encoder = LabelEncoder()
 y_encoded = label_encoder.fit_transform(y)
 print(y_encoded)
+
+#y mapped to dos = 0, normal = 1, probe = 2, r2l = 3, u2r = 4 respectively
+print(X_scaled.shape)
+print(y_encoded.shape)
+print(label_encoder.classes_)
+
+# prepare the data for testing
+test_df = pd.read_csv("data/KDDTest+.txt", names=col_names)
+test_df.drop("difficulty", axis='columns', inplace=True)
+
+# Encode the categorical features in the test set using the same label encoders used for the training set
+
+test_df["protocol_type"] = label_encoder_1.transform(test_df["protocol_type"])
+test_df["service"] = label_encoder_2.transform(test_df["service"])
+test_df["flag"] = label_encoder_3.transform(test_df["flag"])
+
+# Map the attack labels in the test set to the same categories as in the training set
+test_df["label"] = test_df["label"].map(mapping)
+
+# Separate features and labels for the test set
+y_test = test_df["label"]
+X_test = test_df.drop("label", axis="columns")
+
+# Normalize the features in the test set using the same scaler used for the training set
+X_test_scaled = scaler.transform(X_test)
+X_test_scaled = pd.DataFrame(X_test_scaled, columns=X_test.columns)
+
+# Encode the labels in the test set using the same label encoder used for the training set
+y_test_encoded = label_encoder.transform(y_test)
+
