@@ -1,4 +1,5 @@
 from matplotlib.transforms import Transform
+import numpy as np
 import pandas as pd
 from sklearn.preprocessing import LabelEncoder, MinMaxScaler
 
@@ -128,3 +129,14 @@ X_test_scaled = pd.DataFrame(X_test_scaled, columns=X_test.columns)
 # Encode the labels in the test set using the same label encoder used for the training set
 y_test_encoded = label_encoder.transform(y_test)
 
+# Print the shapes of the preprocessed training and test sets and the distribution of labels in the training set
+print(X_test_scaled.shape)
+print(y_test_encoded.shape)
+print(X_scaled.describe())
+print(pd.Series(y_encoded).value_counts())
+
+# Save the preprocessed data to .npy files
+np.save("data/X_train.npy", X_scaled)
+np.save("data/y_train.npy", y_encoded)
+np.save("data/X_test.npy", X_test_scaled)
+np.save("data/y_test.npy", y_test_encoded)
