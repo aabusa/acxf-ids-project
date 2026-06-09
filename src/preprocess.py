@@ -28,12 +28,12 @@ df = pd.read_csv("data/KDDTrain+.txt", names=col_names)
 df.drop("difficulty", axis='columns', inplace=True)
 
 
-label_encoder_1 = LabelEncoder()
-df["protocol_type"] = label_encoder_1.fit_transform(df["protocol_type"])
-label_encoder_2 = LabelEncoder()
-df["service"] = label_encoder_2.fit_transform(df["service"])
-label_encoder_3 = LabelEncoder()
-df["flag"] = label_encoder_3.fit_transform(df["flag"])
+protocol_encoder = LabelEncoder()
+df["protocol_type"] = protocol_encoder.fit_transform(df["protocol_type"])
+service_encoder = LabelEncoder()
+df["service"] = service_encoder.fit_transform(df["service"])
+flag_encoder = LabelEncoder()
+df["flag"] = flag_encoder.fit_transform(df["flag"])
 
 mapping = {
     "normal": "normal",
@@ -111,9 +111,9 @@ test_df.drop("difficulty", axis='columns', inplace=True)
 
 # Encode the categorical features in the test set using the same label encoders used for the training set
 
-test_df["protocol_type"] = label_encoder_1.transform(test_df["protocol_type"])
-test_df["service"] = label_encoder_2.transform(test_df["service"])
-test_df["flag"] = label_encoder_3.transform(test_df["flag"])
+test_df["protocol_type"] = protocol_encoder.transform(test_df["protocol_type"])
+test_df["service"] = service_encoder.transform(test_df["service"])
+test_df["flag"] = flag_encoder.transform(test_df["flag"])
 
 # Map the attack labels in the test set to the same categories as in the training set
 test_df["label"] = test_df["label"].map(mapping)
