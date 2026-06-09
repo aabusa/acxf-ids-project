@@ -1,4 +1,3 @@
-from matplotlib.transforms import Transform
 import numpy as np
 import pandas as pd
 from sklearn.preprocessing import LabelEncoder, MinMaxScaler
@@ -93,12 +92,13 @@ print(y.shape)
 scaler = MinMaxScaler()
 X_scaled = scaler.fit_transform(X)
 X_scaled = pd.DataFrame(X_scaled, columns=X.columns)
-print(X_scaled)
+X_scaled = np.expand_dims(X_scaled , axis= -1)
+
 
 # Encode the labels
 label_encoder = LabelEncoder()
 y_encoded = label_encoder.fit_transform(y)
-print(y_encoded)
+
 
 #y mapped to dos = 0, normal = 1, probe = 2, r2l = 3, u2r = 4 respectively
 print(X_scaled.shape)
@@ -125,6 +125,7 @@ X_test = test_df.drop("label", axis="columns")
 # Normalize the features in the test set using the same scaler used for the training set
 X_test_scaled = scaler.transform(X_test)
 X_test_scaled = pd.DataFrame(X_test_scaled, columns=X_test.columns)
+X_test_scaled = np.expand_dims(X_test_scaled , axis= -1)
 
 # Encode the labels in the test set using the same label encoder used for the training set
 y_test_encoded = label_encoder.transform(y_test)
@@ -132,7 +133,6 @@ y_test_encoded = label_encoder.transform(y_test)
 # Print the shapes of the preprocessed training and test sets and the distribution of labels in the training set
 print(X_test_scaled.shape)
 print(y_test_encoded.shape)
-print(X_scaled.describe())
 print(pd.Series(y_encoded).value_counts())
 
 # Save the preprocessed data to .npy files
@@ -140,3 +140,9 @@ np.save("data/X_train.npy", X_scaled)
 np.save("data/y_train.npy", y_encoded)
 np.save("data/X_test.npy", X_test_scaled)
 np.save("data/y_test.npy", y_test_encoded)
+
+X_train = np.load("data/X_train.npy")
+y_train = np.load("data/y_train.npy")
+
+print(X_train.shape)
+print(y_train.shape)
