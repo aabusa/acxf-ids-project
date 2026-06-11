@@ -91,7 +91,6 @@ print(y.shape)
 # Normalize the features using Min-Max scaling
 scaler = MinMaxScaler()
 X_scaled = scaler.fit_transform(X)
-X_scaled = pd.DataFrame(X_scaled, columns=X.columns)
 X_scaled = np.expand_dims(X_scaled , axis= -1)
 
 
