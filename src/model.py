@@ -2,12 +2,20 @@ import joblib
 import numpy as np
 from tensorflow.keras.models import Sequential
 from tensorflow.keras.layers import Conv1D , Flatten , Dense 
+from sklearn.utils.class_weight import compute_class_weight
+
 
 X_train = np.load("data/X_train.npy")
 X_test = np.load("data/X_test.npy")
 y_train = np.load("data/y_train.npy")
 y_test = np.load("data/y_test.npy")
+unique_classes = np.unique(y_train)
 
+class_weight = compute_class_weight(class_weight='balanced',
+    classes= unique_classes,
+    y=y_train )
+
+class_weight_dict = dict(zip(unique_classes, class_weight))
 
 model = Sequential([
     
@@ -21,6 +29,6 @@ model.summary()
 
 model.compile(optimizer = 'adam' ,loss = 'sparse_categorical_crossentropy' , metrics = ['accuracy'])
 
-model_v1 = model.fit(X_train,y_train,epochs = 10,batch_size = 128,validation_split=0.2)
+model_v1 = model.fit(X_train,y_train,epochs = 10,batch_size = 128,validation_split=0.2,class_weight=class_weight_dict)
 
-model.save("models/Model_v1.keras")
+model.save("models/Model_v2.keras")
