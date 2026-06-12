@@ -1,3 +1,4 @@
+import joblib
 import numpy as np
 import pandas as pd
 from sklearn.preprocessing import LabelEncoder, MinMaxScaler
@@ -92,11 +93,14 @@ print(y.shape)
 scaler = MinMaxScaler()
 X_scaled = scaler.fit_transform(X)
 X_scaled = np.expand_dims(X_scaled , axis= -1)
+joblib.dump(scaler, "data/scaler.pkl")
+
 
 
 # Encode the labels
 label_encoder = LabelEncoder()
 y_encoded = label_encoder.fit_transform(y)
+joblib.dump(label_encoder, "data/label_encoder.pkl")
 
 
 #y mapped to dos = 0, normal = 1, probe = 2, r2l = 3, u2r = 4 respectively
@@ -113,6 +117,9 @@ test_df.drop("difficulty", axis='columns', inplace=True)
 test_df["protocol_type"] = protocol_encoder.transform(test_df["protocol_type"])
 test_df["service"] = service_encoder.transform(test_df["service"])
 test_df["flag"] = flag_encoder.transform(test_df["flag"])
+joblib.dump(protocol_encoder, "data/protocol_encoder.pkl")
+joblib.dump(service_encoder, "data/service_encoder.pkl")
+joblib.dump(flag_encoder, "data/flag_encoder.pkl")
 
 # Map the attack labels in the test set to the same categories as in the training set
 test_df["label"] = test_df["label"].map(mapping)
@@ -120,6 +127,7 @@ test_df["label"] = test_df["label"].map(mapping)
 # Separate features and labels for the test set
 y_test = test_df["label"]
 X_test = test_df.drop("label", axis="columns")
+joblib.dump(list(X.columns), "data/feature_names.pkl")
 
 # Normalize the features in the test set using the same scaler used for the training set
 X_test_scaled = scaler.transform(X_test)
@@ -128,6 +136,7 @@ X_test_scaled = np.expand_dims(X_test_scaled , axis= -1)
 
 # Encode the labels in the test set using the same label encoder used for the training set
 y_test_encoded = label_encoder.transform(y_test)
+joblib.dump(label_encoder, "data/label_encoder.pkl")
 
 # Print the shapes of the preprocessed training and test sets and the distribution of labels in the training set
 print(X_test_scaled.shape)
