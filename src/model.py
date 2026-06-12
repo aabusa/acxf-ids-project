@@ -1,4 +1,3 @@
-import joblib
 import numpy as np
 from tensorflow.keras.models import Sequential
 from tensorflow.keras.layers import Conv1D , Flatten , Dense 
@@ -29,6 +28,6 @@ model.summary()
 
 model.compile(optimizer = 'adam' ,loss = 'sparse_categorical_crossentropy' , metrics = ['accuracy'])
 
-model_v1 = model.fit(X_train,y_train,epochs = 10,batch_size = 128,validation_split=0.2,class_weight=class_weight_dict)
+model = model.fit(X_train,y_train,epochs = 10,batch_size = 128,validation_split=0.2,class_weight=class_weight_dict)
 
-model.save("models/Model_v2.keras")
+model.save("models/Model.keras")
