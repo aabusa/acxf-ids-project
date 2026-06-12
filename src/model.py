@@ -1,3 +1,5 @@
+import os
+import json
 import numpy as np
 from tensorflow.keras.models import Sequential
 from tensorflow.keras.layers import Conv1D , Flatten , Dense 
@@ -28,6 +30,14 @@ model.summary()
 
 model.compile(optimizer = 'adam' ,loss = 'sparse_categorical_crossentropy' , metrics = ['accuracy'])
 
-model = model.fit(X_train,y_train,epochs = 10,batch_size = 128,validation_split=0.2,class_weight=class_weight_dict)
+history = model.fit(X_train,y_train,epochs = 10,batch_size = 128,validation_split=0.2,class_weight=class_weight_dict)
+
+# Save the training history for later evaluation and plotting
+os.makedirs('Results', exist_ok=True)
+history_path = os.path.join('Results', 'training_history.json')
+with open(history_path, 'w') as f:
+    json.dump(history.history, f)
+print(f"Saved training history to {history_path}")
+
 
 model.save("models/Model.keras")
