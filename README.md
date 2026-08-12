@@ -33,9 +33,11 @@ python src/evaluate.py     # confusion matrix, per-class report, training curves
   `scaler.pkl`, the three categorical encoders, `label_encoder.pkl`, and
   `feature_names.pkl` to `data/` so inference can reuse the exact same
   preprocessing.
-- `src/model.py` — trains a Conv1D classifier with class weighting (the
-  dataset is heavily imbalanced — see Results below) and saves
-  `models/Model.keras` plus `Results/training_history.json`.
+- `src/model.py` — holds out a validation split, SMOTE-oversamples the
+  minority classes in the training portion (the dataset is heavily
+  imbalanced — see Results below), trains a Conv1D classifier with early
+  stopping, and saves `models/Model.keras` plus
+  `Results/training_history.json`.
 - `src/evaluate.py` — loads a saved model, prints a confusion matrix and
   classification report against the held-out test set, and plots training
   curves to `Results/evaluation_training_curves.png`.
@@ -45,6 +47,10 @@ python src/evaluate.py     # confusion matrix, per-class report, training curves
   ```bash
   python src/predict.py path/to/rows.csv --model Model
   ```
+
+- `src/explain.py` — SHAP (model-agnostic `PermutationExplainer`) feature
+  importance on a sample of the test set, saved to
+  `Results/shap_summary.png`.
 
 ## Results
 
@@ -80,6 +86,13 @@ fix) didn't run into in the same way. Combining SMOTE with class weighting,
 or using a variant like Borderline-SMOTE/SMOTE-Tomek that's more careful
 near class boundaries, would be the next thing to try for `r2l`
 specifically.
+
+SHAP (`Results/shap_summary.png`) shows the model relies most heavily on
+the `dst_host_*`/`*serror_rate`/`*rerror_rate` connection-error and
+same-service-rate features — consistent with how these attack categories
+actually manifest (e.g. scan/DoS traffic driving up error and repeat-service
+rates), which is a reasonable sanity check that the model learned real
+signal rather than spurious correlations.
 
 ## Project layout
 
