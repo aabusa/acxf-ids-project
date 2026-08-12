@@ -4,20 +4,27 @@ import numpy as np
 from tensorflow.keras.models import Sequential
 from tensorflow.keras.layers import Conv1D, Flatten, Dense, Dropout
 from tensorflow.keras.callbacks import EarlyStopping, ModelCheckpoint
-from sklearn.utils.class_weight import compute_class_weight
+from sklearn.model_selection import train_test_split
+from imblearn.over_sampling import SMOTE
 
 
-X_train = np.load("data/X_train.npy")
-X_test = np.load("data/X_test.npy")
-y_train = np.load("data/y_train.npy")
-y_test = np.load("data/y_test.npy")
-unique_classes = np.unique(y_train)
+X = np.load("data/X_train.npy")
+y = np.load("data/y_train.npy")
 
-class_weight = compute_class_weight(class_weight='balanced',
-    classes= unique_classes,
-    y=y_train )
+# Hold out a real (non-synthetic) validation set before oversampling, so
+# validation metrics aren't inflated by SMOTE-generated points.
+X_train_raw, X_val, y_train_raw, y_val = train_test_split(
+    X, y, test_size=0.2, stratify=y, random_state=42
+)
 
-class_weight_dict = dict(zip(unique_classes, class_weight))
+# SMOTE needs 2D input; drop the size-1 channel dim used for Conv1D and
+# restore it after resampling.
+n_features = X_train_raw.shape[1]
+X_train_res, y_train = SMOTE(random_state=42).fit_resample(
+    X_train_raw.reshape(len(X_train_raw), n_features), y_train_raw
+)
+X_train = X_train_res.reshape(-1, n_features, 1)
+print("Class counts after SMOTE:", dict(zip(*np.unique(y_train, return_counts=True))))
 
 model = Sequential([
     Conv1D(input_shape=(41, 1), kernel_size=3, filters=64, activation='relu', padding='same'),
@@ -39,8 +46,8 @@ callbacks = [
     ModelCheckpoint('models/Model.keras', monitor='val_loss', save_best_only=True),
 ]
 
-history = model.fit(X_train,y_train,epochs = 40,batch_size = 128,validation_split=0.2,
-                     class_weight=class_weight_dict,callbacks=callbacks)
+history = model.fit(X_train,y_train,epochs = 40,batch_size = 128,
+                     validation_data=(X_val, y_val),callbacks=callbacks)
 
 # Save the training history for later evaluation and plotting
 os.makedirs('Results', exist_ok=True)

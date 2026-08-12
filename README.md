@@ -58,21 +58,28 @@ Class distribution in the training set is highly imbalanced:
 | r2l    | 995           |
 | u2r    | 52            |
 
-Current test-set performance (2-conv-layer model with dropout, class
-weighting, and early stopping on val_loss):
+Current test-set performance (2-conv-layer model with dropout, SMOTE
+oversampling of the minority classes in the training split, and early
+stopping on val_loss):
 
 | class  | precision | recall | f1-score |
 |--------|-----------|--------|----------|
-| dos    | 0.96      | 0.73   | 0.83     |
-| normal | 0.68      | 0.96   | 0.80     |
-| probe  | 0.73      | 0.64   | 0.68     |
-| r2l    | 0.90      | 0.32   | 0.47     |
-| u2r    | 0.65      | 0.33   | 0.44     |
+| dos    | 0.96      | 0.82   | 0.88     |
+| normal | 0.68      | 0.97   | 0.80     |
+| probe  | 0.85      | 0.65   | 0.73     |
+| r2l    | 0.96      | 0.17   | 0.28     |
+| u2r    | 0.56      | 0.43   | 0.49     |
 
-Macro-avg F1 0.64 (up from 0.55 on the original single-conv-layer baseline).
-`r2l`/`u2r` recall is still the weak point — the rarest classes remain hard
-to catch even with class weighting; oversampling (e.g. SMOTE) is the next
-thing to try if this needs to go further.
+Macro-avg F1 is flat at 0.64 versus the earlier class-weighted-only model,
+but the gains moved around: `dos`/`probe`/`u2r` improved, while `r2l`
+recall actually dropped (0.32 -> 0.17) — 2362 of 2885 `r2l` test samples
+are now misclassified as `normal`. SMOTE's synthetic `r2l` points appear to
+sit too close to the `normal` region of feature space to help separate
+them, which class weighting (a loss-level reweighting, not a feature-space
+fix) didn't run into in the same way. Combining SMOTE with class weighting,
+or using a variant like Borderline-SMOTE/SMOTE-Tomek that's more careful
+near class boundaries, would be the next thing to try for `r2l`
+specifically.
 
 ## Project layout
 
