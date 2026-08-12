@@ -51,6 +51,9 @@ python src/evaluate.py     # confusion matrix, per-class report, training curves
 - `src/explain.py` — SHAP (model-agnostic `PermutationExplainer`) feature
   importance on a sample of the test set, saved to
   `Results/shap_summary.png`.
+- `src/adversarial.py` — FGSM and PGD (10-step) L-inf attacks against the
+  model over a range of epsilons, saved to
+  `Results/adversarial_robustness.png`.
 
 ## Results
 
@@ -93,6 +96,16 @@ same-service-rate features — consistent with how these attack categories
 actually manifest (e.g. scan/DoS traffic driving up error and repeat-service
 rates), which is a reasonable sanity check that the model learned real
 signal rather than spurious correlations.
+
+Adversarial robustness (`Results/adversarial_robustness.png`, 2000 test
+samples): clean accuracy 0.80 collapses to 0.54 (FGSM) / 0.39 (PGD, 10
+steps) at a tiny L-inf perturbation of epsilon=0.01, and keeps falling to
+0.38 / 0.16 by epsilon=0.2. The model has no adversarial training or input
+sanitization, so this isn't surprising, but it's a real gap for a
+security-facing classifier — an attacker who can nudge feature values
+(e.g. via traffic shaping) has a cheap way to evade detection. Adversarial
+training (mixing FGSM/PGD examples into the training set) would be the
+natural next step if robustness needs to improve.
 
 ## Project layout
 
