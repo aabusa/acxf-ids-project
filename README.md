@@ -33,10 +33,10 @@ python src/evaluate.py     # confusion matrix, per-class report, training curves
   `scaler.pkl`, the three categorical encoders, `label_encoder.pkl`, and
   `feature_names.pkl` to `data/` so inference can reuse the exact same
   preprocessing.
-- `src/model.py` — holds out a validation split, SMOTE-oversamples the
-  minority classes in the training portion (the dataset is heavily
-  imbalanced — see Results below), trains a Conv1D classifier with early
-  stopping, and saves `models/Model.keras` plus
+- `src/model.py` — holds out a stratified validation split, trains a Conv1D
+  classifier with class weighting (the dataset is heavily imbalanced — see
+  Results below, and why SMOTE oversampling was tried and dropped) and
+  early stopping, and saves `models/Model.keras` plus
   `Results/training_history.json`.
 - `src/evaluate.py` — loads a saved model, prints a confusion matrix and
   classification report against the held-out test set, and plots training
@@ -67,28 +67,38 @@ Class distribution in the training set is highly imbalanced:
 | r2l    | 995           |
 | u2r    | 52            |
 
-Current test-set performance (2-conv-layer model with dropout, SMOTE
-oversampling of the minority classes in the training split, and early
-stopping on val_loss):
+Current test-set performance (2-conv-layer model with dropout, class
+weighting, and early stopping on val_loss against a real stratified
+validation split):
 
 | class  | precision | recall | f1-score |
 |--------|-----------|--------|----------|
-| dos    | 0.96      | 0.82   | 0.88     |
-| normal | 0.68      | 0.97   | 0.80     |
-| probe  | 0.85      | 0.65   | 0.73     |
-| r2l    | 0.96      | 0.17   | 0.28     |
-| u2r    | 0.56      | 0.43   | 0.49     |
+| dos    | 0.97      | 0.85   | 0.90     |
+| normal | 0.71      | 0.96   | 0.82     |
+| probe  | 0.78      | 0.63   | 0.70     |
+| r2l    | 0.93      | 0.23   | 0.36     |
+| u2r    | 0.21      | 0.33   | 0.26     |
 
-Macro-avg F1 is flat at 0.64 versus the earlier class-weighted-only model,
-but the gains moved around: `dos`/`probe`/`u2r` improved, while `r2l`
-recall actually dropped (0.32 -> 0.17) — 2362 of 2885 `r2l` test samples
-are now misclassified as `normal`. SMOTE's synthetic `r2l` points appear to
-sit too close to the `normal` region of feature space to help separate
-them, which class weighting (a loss-level reweighting, not a feature-space
-fix) didn't run into in the same way. Combining SMOTE with class weighting,
-or using a variant like Borderline-SMOTE/SMOTE-Tomek that's more careful
-near class boundaries, would be the next thing to try for `r2l`
-specifically.
+**Three imbalance strategies were tried; class weighting won on `r2l` in
+every run:**
+
+| approach                    | r2l f1 | u2r f1 | macro F1 |
+|------------------------------|--------|--------|----------|
+| class weighting (this model) | 0.36   | 0.26   | 0.61     |
+| class weighting (earlier run)| 0.47   | 0.44   | 0.64     |
+| plain SMOTE                  | 0.28   | 0.49   | 0.64     |
+| Borderline-SMOTE              | 0.27   | 0.34   | 0.59     |
+
+Both SMOTE variants left `r2l` worse than either class-weighting run —
+their synthetic `r2l` points sit too close to the `normal` region of
+feature space to help separate the two, and Borderline-SMOTE's boundary-
+focused sampling didn't fix that. Class weighting was kept as the final
+approach. Note the two class-weighting rows are the *same* code, different
+runs — `u2r` has only 67 test samples, so its score swings a lot between
+runs; treat any single point estimate here cautiously rather than reading
+too much into small differences. SMOTE combined with class weighting isn't
+a useful next step: once SMOTE balances the classes, `class_weight='balanced'`
+computes to ~1.0 for every class, i.e. a no-op.
 
 SHAP (`Results/shap_summary.png`) shows the model relies most heavily on
 the `dst_host_*`/`*serror_rate`/`*rerror_rate` connection-error and

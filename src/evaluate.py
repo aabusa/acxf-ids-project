@@ -55,7 +55,6 @@ if os.path.exists(history_path):
 
     plot_path = os.path.join('Results', 'evaluation_training_curves.png')
     plt.savefig(plot_path)
-    plt.show()
     print(f"Saved evaluation training curves to {plot_path}")
 else:
     print(f"No training history found at {history_path}. Train with `src/model.py` first.")
