@@ -1,16 +1,20 @@
+import argparse
 import os
 import json
 import numpy as np
 import matplotlib.pyplot as plt
-from tensorflow.keras.models import load_model 
+from tensorflow.keras.models import load_model
 from sklearn.metrics import confusion_matrix, classification_report
+
+parser = argparse.ArgumentParser(description="Evaluate a saved IDS model on the test set")
+parser.add_argument("--model", default="Model", help="Model name under models/ to evaluate (default: Model)")
+args = parser.parse_args()
 
 X_test = np.load("data/X_test.npy")
 y_test = np.load("data/y_test.npy")
 target_names=['dos', 'normal', 'probe', 'r2l', 'u2r']
 
-model_name = input("Enter the name of the model that you want to evaluate: ")
-model = load_model(f"models/{model_name}.keras")
+model = load_model(f"models/{args.model}.keras")
 
 y_pred = model.predict(X_test)
 cm = confusion_matrix(y_test, y_pred.argmax(axis=1))
