@@ -58,9 +58,21 @@ Class distribution in the training set is highly imbalanced:
 | r2l    | 995           |
 | u2r    | 52            |
 
-Current test-set performance (see `Results/` for the latest run) is strong on
-`dos`/`normal`/`probe` but weak on the rare `r2l`/`u2r` classes despite class
-weighting — improving recall on those two is the main open problem.
+Current test-set performance (2-conv-layer model with dropout, class
+weighting, and early stopping on val_loss):
+
+| class  | precision | recall | f1-score |
+|--------|-----------|--------|----------|
+| dos    | 0.96      | 0.73   | 0.83     |
+| normal | 0.68      | 0.96   | 0.80     |
+| probe  | 0.73      | 0.64   | 0.68     |
+| r2l    | 0.90      | 0.32   | 0.47     |
+| u2r    | 0.65      | 0.33   | 0.44     |
+
+Macro-avg F1 0.64 (up from 0.55 on the original single-conv-layer baseline).
+`r2l`/`u2r` recall is still the weak point — the rarest classes remain hard
+to catch even with class weighting; oversampling (e.g. SMOTE) is the next
+thing to try if this needs to go further.
 
 ## Project layout
 
