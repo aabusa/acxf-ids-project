@@ -6,6 +6,7 @@ from tensorflow.keras.models import load_model
 
 feature_names = joblib.load("data/feature_names.pkl")
 n_features = len(feature_names)
+target_names = joblib.load("data/label_encoder.pkl").classes_.tolist()
 
 X_test = np.load("data/X_test.npy").reshape(-1, n_features)
 X_train = np.load("data/X_train.npy").reshape(-1, n_features)
@@ -37,3 +38,18 @@ print("Saved SHAP summary to Results/shap_summary.png")
 
 for i in order:
     print(f"{feature_names[i]}: {importance[i]:.4f}")
+
+# Per-class breakdown: mean |SHAP value| across samples only, keeping the
+# class axis, so each class gets its own top-feature ranking.
+per_class_importance = np.abs(shap_values.values).mean(axis=0)  # (n_features, n_classes)
+
+fig, axes = plt.subplots(1, len(target_names), figsize=(4 * len(target_names), 6))
+for ci, cls in enumerate(target_names):
+    order_c = np.argsort(per_class_importance[:, ci])[::-1][:10]
+    ax = axes[ci]
+    ax.barh([feature_names[i] for i in order_c][::-1], per_class_importance[order_c, ci][::-1])
+    ax.set_title(cls)
+    ax.set_xlabel("mean(|SHAP value|)")
+plt.tight_layout()
+plt.savefig("Results/shap_per_class.png")
+print("Saved per-class SHAP importance to Results/shap_per_class.png")

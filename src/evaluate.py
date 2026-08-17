@@ -4,7 +4,7 @@ import json
 import numpy as np
 import matplotlib.pyplot as plt
 from tensorflow.keras.models import load_model
-from sklearn.metrics import confusion_matrix, classification_report
+from sklearn.metrics import confusion_matrix, classification_report, ConfusionMatrixDisplay
 
 parser = argparse.ArgumentParser(description="Evaluate a saved IDS model on the test set")
 parser.add_argument("--model", default="Model", help="Model name under models/ to evaluate (default: Model)")
@@ -24,6 +24,16 @@ print("Confusion Matrix:")
 print(cm)
 print("Classification Report:")
 print(report)
+
+os.makedirs('Results', exist_ok=True)
+disp = ConfusionMatrixDisplay(confusion_matrix=cm, display_labels=target_names)
+fig, ax = plt.subplots(figsize=(6, 6))
+disp.plot(ax=ax, cmap='Blues', values_format='d', colorbar=False)
+plt.title('Confusion Matrix')
+plt.tight_layout()
+cm_path = os.path.join('Results', 'confusion_matrix.png')
+plt.savefig(cm_path)
+print(f"Saved confusion matrix to {cm_path}")
 
 # Load and plot training history if available
 history_path = os.path.join('Results', 'training_history.json')

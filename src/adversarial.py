@@ -1,3 +1,4 @@
+import joblib
 import numpy as np
 import tensorflow as tf
 import matplotlib.pyplot as plt
@@ -10,6 +11,8 @@ PGD_STEPS = 10
 
 X_test = np.load("data/X_test.npy").astype("float32")[:N_SAMPLES]
 y_test = np.load("data/y_test.npy")[:N_SAMPLES]
+target_names = joblib.load("data/label_encoder.pkl").classes_.tolist()
+n_classes = len(target_names)
 model = load_model("models/Model.keras")
 loss_fn = SparseCategoricalCrossentropy()
 
@@ -39,19 +42,33 @@ def pgd_attack(x, y, epsilon, steps=PGD_STEPS):
     return x_adv
 
 
-def accuracy(x):
-    preds = model.predict(x, verbose=0)
-    return float((preds.argmax(axis=1) == y_test).mean())
+def accuracy_from_preds(preds, y_true):
+    return float((preds.argmax(axis=1) == y_true).mean())
+
+
+def per_class_accuracy(preds, y_true, n_classes):
+    correct = preds.argmax(axis=1) == y_true
+    return np.array([
+        correct[y_true == c].mean() if (y_true == c).any() else np.nan
+        for c in range(n_classes)
+    ])
 
 
 fgsm_acc, pgd_acc = [], []
-for epsilon in EPSILONS:
+fgsm_per_class = np.zeros((len(EPSILONS), n_classes))
+pgd_per_class = np.zeros((len(EPSILONS), n_classes))
+
+for idx, epsilon in enumerate(EPSILONS):
     if epsilon == 0.0:
-        fgsm_acc.append(accuracy(X_test))
-        pgd_acc.append(fgsm_acc[-1])
-        continue
-    fgsm_acc.append(accuracy(fgsm_attack(X_test, y_test, epsilon).numpy()))
-    pgd_acc.append(accuracy(pgd_attack(X_test, y_test, epsilon).numpy()))
+        fgsm_preds = pgd_preds = model.predict(X_test, verbose=0)
+    else:
+        fgsm_preds = model.predict(fgsm_attack(X_test, y_test, epsilon).numpy(), verbose=0)
+        pgd_preds = model.predict(pgd_attack(X_test, y_test, epsilon).numpy(), verbose=0)
+
+    fgsm_acc.append(accuracy_from_preds(fgsm_preds, y_test))
+    pgd_acc.append(accuracy_from_preds(pgd_preds, y_test))
+    fgsm_per_class[idx] = per_class_accuracy(fgsm_preds, y_test, n_classes)
+    pgd_per_class[idx] = per_class_accuracy(pgd_preds, y_test, n_classes)
     print(f"epsilon={epsilon}: FGSM acc={fgsm_acc[-1]:.3f}  PGD acc={pgd_acc[-1]:.3f}")
 
 plt.figure(figsize=(6, 5))
@@ -64,3 +81,18 @@ plt.legend()
 plt.tight_layout()
 plt.savefig('Results/adversarial_robustness.png')
 print("Saved adversarial robustness plot to Results/adversarial_robustness.png")
+
+fig, axes = plt.subplots(1, 2, figsize=(12, 5), sharey=True)
+for ax, per_class, title in [
+    (axes[0], fgsm_per_class, 'FGSM'),
+    (axes[1], pgd_per_class, f'PGD ({PGD_STEPS} steps)'),
+]:
+    for c, name in enumerate(target_names):
+        ax.plot(EPSILONS, per_class[:, c], 'o-', label=name)
+    ax.set_xlabel('epsilon (L-inf perturbation)')
+    ax.set_title(title)
+axes[0].set_ylabel('per-class accuracy')
+axes[1].legend(loc='center left', bbox_to_anchor=(1.0, 0.5))
+plt.tight_layout()
+plt.savefig('Results/adversarial_per_class.png')
+print("Saved per-class adversarial accuracy plot to Results/adversarial_per_class.png")

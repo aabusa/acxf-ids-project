@@ -40,8 +40,9 @@ python src/evaluate.py     # confusion matrix, per-class report, training curves
   with clean data (see Results — this has a real caveat), and saves
   `models/Model.keras` plus `Results/training_history.json`.
 - `src/evaluate.py` — loads a saved model, prints a confusion matrix and
-  classification report against the held-out test set, and plots training
-  curves to `Results/evaluation_training_curves.png`.
+  classification report against the held-out test set, saves a labelled
+  confusion-matrix heatmap to `Results/confusion_matrix.png`, and plots
+  training curves to `Results/evaluation_training_curves.png`.
 - `src/predict.py` — runs the saved model + preprocessing artifacts against
   a CSV of raw, unlabeled NSL-KDD rows:
 
@@ -50,11 +51,13 @@ python src/evaluate.py     # confusion matrix, per-class report, training curves
   ```
 
 - `src/explain.py` — SHAP (model-agnostic `PermutationExplainer`) feature
-  importance on a sample of the test set, saved to
-  `Results/shap_summary.png`.
+  importance on a sample of the test set: a global top-15 plot saved to
+  `Results/shap_summary.png`, and a per-class top-10 breakdown saved to
+  `Results/shap_per_class.png`.
 - `src/adversarial.py` — FGSM and PGD (10-step) L-inf attacks against the
-  model over a range of epsilons, saved to
-  `Results/adversarial_robustness.png`.
+  model over a range of epsilons: overall accuracy saved to
+  `Results/adversarial_robustness.png`, and a per-class accuracy breakdown
+  saved to `Results/adversarial_per_class.png`.
 
 ## Results
 
