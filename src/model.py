@@ -12,6 +12,15 @@ from sklearn.utils.class_weight import compute_class_weight
 ADV_EPSILON = 0.05  # matches one of the epsilons probed in src/adversarial.py
 ADV_FINE_TUNE_EPOCHS = 10
 
+# Categorical/binary feature indices (0-indexed, matching preprocess.py's
+# col_names order with "label"/"difficulty" dropped) that FGSM must never
+# perturb: protocol_type, service, flag, land, logged_in, root_shell,
+# su_attempted, is_host_login, is_guest_login. Perturbing these to fractional
+# values doesn't correspond to any real network state.
+FROZEN_FEATURE_INDICES = [1, 2, 3, 6, 11, 13, 14, 20, 21]
+PERTURB_MASK = np.ones((41, 1), dtype=np.float32)
+PERTURB_MASK[FROZEN_FEATURE_INDICES, 0] = 0.0
+
 
 X = np.load("data/X_train.npy")
 y = np.load("data/y_train.npy")
@@ -51,12 +60,7 @@ callbacks = [
 history = model.fit(X_train,y_train,epochs = 40,batch_size = 128,
                      validation_data=(X_val, y_val),class_weight=class_weight_dict,callbacks=callbacks)
 
-# Adversarial fine-tuning: generate FGSM examples against the just-trained
-# model and mix them into the training set, so it's harder to fool with the
-# small input perturbations evaluated in src/adversarial.py. This trades
-# some clean accuracy for robustness, so it's a fixed number of epochs
-# rather than early-stopped on clean val_loss (which would just reject the
-# robustness gain).
+
 loss_fn = SparseCategoricalCrossentropy()
 
 
@@ -69,7 +73,8 @@ def fgsm_batch(x, y, epsilon, batch_size=512):
             tape.watch(xb)
             loss = loss_fn(yb, model(xb, training=False))
         grad = tape.gradient(loss, xb)
-        adv_batches.append(tf.clip_by_value(xb + epsilon * tf.sign(grad), 0.0, 1.0).numpy())
+        perturbation = epsilon * tf.sign(grad) * PERTURB_MASK
+        adv_batches.append(tf.clip_by_value(xb + perturbation, 0.0, 1.0).numpy())
     return np.concatenate(adv_batches)
 
 

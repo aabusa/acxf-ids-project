@@ -9,6 +9,11 @@ N_SAMPLES = 2000
 EPSILONS = [0.0, 0.01, 0.02, 0.05, 0.1, 0.2]
 PGD_STEPS = 10
 
+
+FROZEN_FEATURE_INDICES = [1, 2, 3, 6, 11, 13, 14, 20, 21]
+PERTURB_MASK = np.ones((41, 1), dtype=np.float32)
+PERTURB_MASK[FROZEN_FEATURE_INDICES, 0] = 0.0
+
 X_test = np.load("data/X_test.npy").astype("float32")[:N_SAMPLES]
 y_test = np.load("data/y_test.npy")[:N_SAMPLES]
 target_names = joblib.load("data/label_encoder.pkl").classes_.tolist()
@@ -23,7 +28,7 @@ def fgsm_attack(x, y, epsilon):
         tape.watch(x)
         loss = loss_fn(y, model(x, training=False))
     grad = tape.gradient(loss, x)
-    x_adv = x + epsilon * tf.sign(grad)
+    x_adv = x + epsilon * tf.sign(grad) * PERTURB_MASK
     return tf.clip_by_value(x_adv, 0.0, 1.0)
 
 
@@ -36,7 +41,7 @@ def pgd_attack(x, y, epsilon, steps=PGD_STEPS):
             tape.watch(x_adv)
             loss = loss_fn(y, model(x_adv, training=False))
         grad = tape.gradient(loss, x_adv)
-        x_adv = x_adv + alpha * tf.sign(grad)
+        x_adv = x_adv + alpha * tf.sign(grad) * PERTURB_MASK
         x_adv = tf.clip_by_value(x_adv, x_orig - epsilon, x_orig + epsilon)
         x_adv = tf.clip_by_value(x_adv, 0.0, 1.0)
     return x_adv
